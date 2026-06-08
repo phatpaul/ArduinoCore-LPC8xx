@@ -1,19 +1,67 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — SPI implementation stubs
-//
-// TODO: implement against MCUXpresso SDK
-//   - begin()        → SWM mux SPI0_SCK/MOSI/MISO + SPI_MasterInit
-//   - transfer(b)    → SPI_MasterTransferBlocking with 1-byte buffer
-//   - setClockDivider → recompute baudRate_Bps, SPI_MasterSetBaudRate
-//   - setDataMode    → SPI_Enable false + reconfigure CPOL/CPHA, re-enable
 #include "SPI.h"
+#include "lpc8xx_registers.h"
 
 SPIClass SPI;
 
-void SPIClass::begin(void) {}
-void SPIClass::end(void) {}
+static const uint8_t SWM_SPI0_SCK = 15u;
+static const uint8_t SWM_SPI0_MOSI = 16u;
+static const uint8_t SWM_SPI0_MISO = 17u;
+static const uint8_t SWM_SPI0_SSEL0 = 18u;
 
-uint8_t SPIClass::transfer(uint8_t b) { (void)b; return 0; }
+void SPIClass::applyConfig(void) {
+    uint32_t cfg = LPC8XX_SPI_CFG_MASTER;
+    if (_bitOrder == LSBFIRST) {
+        cfg |= (1u << 3);
+    }
+    if ((_dataMode & 0x1u) != 0u) {
+        cfg |= (1u << 4);
+    }
+    if ((_dataMode & 0x2u) != 0u) {
+        cfg |= (1u << 5);
+    }
+
+    LPC8XX_SPI0->CFG = cfg;
+    LPC8XX_SPI0->DIV = _divider > 0u ? (uint32_t)(_divider - 1u) : 0u;
+    LPC8XX_SPI0->DLY = 0u;
+    LPC8XX_SPI0->CFG = cfg | LPC8XX_SPI_CFG_ENABLE;
+}
+
+void SPIClass::begin(void) {
+    lpc8xx_basic_peripheral_init();
+    lpc8xx_enable_clock(LPC8XX_AHBCLK_SPI0);
+    lpc8xx_reset_peripheral(LPC8XX_PRESET_SPI0);
+
+    lpc8xx_swm_assign(SWM_SPI0_SCK,
+                      lpc8xx_swm_pin(g_APinDescription[PIN_SPI_SCK].port,
+                                      g_APinDescription[PIN_SPI_SCK].bit));
+    lpc8xx_swm_assign(SWM_SPI0_MOSI,
+                      lpc8xx_swm_pin(g_APinDescription[PIN_SPI_MOSI].port,
+                                      g_APinDescription[PIN_SPI_MOSI].bit));
+    lpc8xx_swm_assign(SWM_SPI0_MISO,
+                      lpc8xx_swm_pin(g_APinDescription[PIN_SPI_MISO].port,
+                                      g_APinDescription[PIN_SPI_MISO].bit));
+    lpc8xx_swm_assign(SWM_SPI0_SSEL0,
+                      lpc8xx_swm_pin(g_APinDescription[PIN_SPI_SS].port,
+                                      g_APinDescription[PIN_SPI_SS].bit));
+
+    _begun = true;
+    applyConfig();
+}
+
+void SPIClass::end(void) {
+    LPC8XX_SPI0->CFG = 0u;
+    _begun = false;
+}
+
+uint8_t SPIClass::transfer(uint8_t b) {
+    while ((LPC8XX_SPI0->STAT & LPC8XX_SPI_STAT_TXRDY) == 0u) {
+    }
+    LPC8XX_SPI0->TXDAT = b;
+    while ((LPC8XX_SPI0->STAT & LPC8XX_SPI_STAT_RXRDY) == 0u) {
+    }
+    return (uint8_t)(LPC8XX_SPI0->RXDAT & 0xFFu);
+}
 
 void SPIClass::transfer(void *buf, size_t len) {
     uint8_t *p = static_cast<uint8_t *>(buf);
@@ -22,6 +70,23 @@ void SPIClass::transfer(void *buf, size_t len) {
     }
 }
 
-void SPIClass::setClockDivider(uint8_t divider) { (void)divider; }
-void SPIClass::setBitOrder(uint8_t order) { (void)order; }
-void SPIClass::setDataMode(uint8_t mode) { (void)mode; }
+void SPIClass::setClockDivider(uint8_t divider) {
+    _divider = divider == 0u ? SPI_CLOCK_DIV4 : divider;
+    if (_begun) {
+        applyConfig();
+    }
+}
+
+void SPIClass::setBitOrder(uint8_t order) {
+    _bitOrder = order;
+    if (_begun) {
+        applyConfig();
+    }
+}
+
+void SPIClass::setDataMode(uint8_t mode) {
+    _dataMode = mode & 0x3u;
+    if (_begun) {
+        applyConfig();
+    }
+}

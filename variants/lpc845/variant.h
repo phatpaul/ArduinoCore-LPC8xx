@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — LPC845 pin map
-//
-// SKELETON: physical pin numbers TBD against the LPC845M301JBD64 datasheet
-// and the LPC845-BRK board silkscreen. Each entry resolves to a
-// (port, bit) pair consumed by wiring_digital.c.
+// LPC845 variant for LPC845-BRK style headers.
 #ifndef ARDUINO_CORE_LPC8XX_VARIANT_LPC845_H
 #define ARDUINO_CORE_LPC8XX_VARIANT_LPC845_H
 
@@ -16,4 +12,32 @@
 
 #define VARIANT_NUM_DIGITAL_PINS 30u
 
-#endif // ARDUINO_CORE_LPC8XX_VARIANT_LPC845_H
+#define LED_BUILTIN 13u
+
+#define PIN_SERIAL_TX 4u
+#define PIN_SERIAL_RX 0u
+
+#define PIN_SPI_SS   10u
+#define PIN_SPI_MOSI 11u
+#define PIN_SPI_MISO 12u
+#define PIN_SPI_SCK  13u
+
+typedef struct {
+    uint8_t port;
+    uint8_t bit;
+} lpc8xx_pin_info_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern const lpc8xx_pin_info_t g_APinDescription[VARIANT_NUM_DIGITAL_PINS];
+extern const uint8_t variant_pin_count;
+
+void initVariant(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

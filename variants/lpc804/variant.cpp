@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — LPC804 variant init stubs
-//
-// TODO:
-//   - Pin table (smaller pin count than LPC845; check DIP24/QFP24 package
-//     against datasheet Rev 1.x).
-//   - Clock init: FRO @ 15 MHz, zero flash wait states.
-//   - Switch-matrix defaults: route USART0 + SPI0 to LPCXpresso804 header
-//     pins.
 #include "variant.h"
+#include "lpc8xx_registers.h"
+
+extern "C" {
+
+const lpc8xx_pin_info_t g_APinDescription[VARIANT_NUM_DIGITAL_PINS] = {
+    {0, 0},  {0, 1},  {0, 2},  {0, 3},  {0, 4},  {0, 5},
+    {0, 6},  {0, 7},  {0, 8},  {0, 9},  {0, 10}, {0, 11},
+    {0, 12}, {0, 13}, {0, 14}, {0, 15}, {0, 16}, {0, 17},
+    {0, 18}, {0, 19}, {0, 20}, {0, 21},
+};
+
+const uint8_t variant_pin_count = VARIANT_NUM_DIGITAL_PINS;
+
+void initVariant(void) {
+    lpc8xx_basic_peripheral_init();
+}
+
+}

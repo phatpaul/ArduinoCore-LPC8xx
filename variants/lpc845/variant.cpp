@@ -1,8 +1,21 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — LPC845 variant init stubs
-//
-// TODO:
-//   - Pin table: GPIO_PORT0_BASE → port/bit per Arduino pin index.
-//   - Clock init: switch to FRO @ 30 MHz, set flash wait states (1WS @ 30 MHz).
-//   - Switch-matrix defaults: leave USART0 + SPI0 mux'd to LPC845-BRK header pins.
 #include "variant.h"
+#include "lpc8xx_registers.h"
+
+extern "C" {
+
+const lpc8xx_pin_info_t g_APinDescription[VARIANT_NUM_DIGITAL_PINS] = {
+    {0, 0},  {0, 1},  {0, 2},  {0, 3},  {0, 4},  {0, 5},
+    {0, 6},  {0, 7},  {0, 8},  {0, 9},  {0, 10}, {0, 11},
+    {0, 12}, {0, 13}, {0, 14}, {0, 15}, {0, 16}, {0, 17},
+    {0, 18}, {0, 19}, {0, 20}, {0, 21}, {0, 22}, {0, 23},
+    {0, 24}, {0, 25}, {0, 26}, {0, 27}, {0, 28}, {0, 29},
+};
+
+const uint8_t variant_pin_count = VARIANT_NUM_DIGITAL_PINS;
+
+void initVariant(void) {
+    lpc8xx_basic_peripheral_init();
+}
+
+}

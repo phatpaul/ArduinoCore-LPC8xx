@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — framework-owned main()
-//
-// Replaces the hand-rolled main shim in fbuild's Stage-1 LPC8xx scaffold.
-// SystemInit() is provided by startup_lpc8xx.S (per-variant).
+// Framework-owned main().
 #include "Arduino.h"
 
-extern "C" void SystemInit(void);
-
 int main(void) {
-    SystemInit();
-    // TODO: variant-specific clock/peripheral init before setup().
+    // Reset_Handler owns SystemInit on fbuild's LPC804/LPC845 startup path.
+    // main() only initializes Arduino peripherals before user code runs.
+    init();
+    initVariant();
     setup();
     for (;;) {
         loop();
+        yield();
     }
     return 0;
 }
