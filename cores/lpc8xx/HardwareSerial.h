@@ -6,28 +6,25 @@
 #include <stdint.h>
 #include <stddef.h>
 
-class HardwareSerial {
+#include "Stream.h"
+
+#define SERIAL_8N1 0x06
+
+class HardwareSerial : public Stream {
 public:
     void begin(uint32_t baud);
+    void begin(uint32_t baud, uint16_t config);
     void end(void);
-    int available(void);
-    int read(void);
-    int peek(void);
-    void flush(void);
-    size_t write(uint8_t b);
-    size_t write(const uint8_t *buf, size_t len);
+    int available(void) override;
+    int availableForWrite(void);
+    int read(void) override;
+    int peek(void) override;
+    void flush(void) override;
+    size_t write(uint8_t b) override;
+    size_t write(const uint8_t *buf, size_t len) override;
+    using Print::write;
 
-    size_t print(const char *s);
-    size_t print(int n);
-    size_t print(unsigned int n);
-    size_t print(long n);
-    size_t print(unsigned long n);
-    size_t println(const char *s);
-    size_t println(int n);
-    size_t println(unsigned int n);
-    size_t println(long n);
-    size_t println(unsigned long n);
-    size_t println(void);
+    explicit operator bool(void) const;
 };
 
 extern HardwareSerial Serial;

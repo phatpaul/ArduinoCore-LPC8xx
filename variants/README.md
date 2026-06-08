@@ -1,19 +1,16 @@
 # variants/
 
-Per-MCU specialisation directories. Each variant provides:
+Arduino variants are board profiles. MCU-level support is shared where useful,
+but FQBNs use board-named variants:
 
-- `variant.h` — pin-number → port/bit map exposed via the Arduino
-  `pin_size_t` index. Also clock-tree constants (FRO frequency, flash
-  wait states).
-- `variant.cpp` — pin-table definitions + any variant-specific init
-  (e.g. clock switching, MRT prescaler).
-- `startup_<part>.S` — Reset_Handler + vector table + `SystemInit`.
-- `<part>.ld` — linker script (Flash + SRAM layout).
+| Variant | FQBN board ID | MCU | Notes |
+|---|---|---|---|
+| `lpc845brk/` | `lpc845brk` | LPC845 | Breakout/prototyping board |
+| `lpcxpresso804/` | `lpcxpresso804` | LPC804 | 3.3 V Arduino-header board |
+| `lpcxpresso845max/` | `lpcxpresso845max` | LPC845 | 3.3 V Arduino-header board, provisional map |
 
-| Variant | MCU | Flash | RAM | Clock |
-|---|---|---:|---:|---|
-| `lpc845/` | LPC845M301JBD64 | 64 KB | 16 KB | 30 MHz FRO |
-| `lpc804/` | LPC804M101JDH24 | 32 KB | 4 KB | 15 MHz FRO |
-
-Adding a new LPC8xx part = create a new subdirectory mirroring the
-`lpc845/` layout.
+The older `lpc804/` and `lpc845/` directories hold shared MCU-level direct GPIO
+tables used by the board variants. Each pin entry records GPIO, ADC, DAC, PWM,
+interrupt, voltage, and LED capability flags. Header-label verification against
+NXP board manuals remains required before treating these as final physical
+board maps.

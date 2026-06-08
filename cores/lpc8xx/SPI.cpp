@@ -9,6 +9,20 @@ static const uint8_t SWM_SPI0_MOSI = 16u;
 static const uint8_t SWM_SPI0_MISO = 17u;
 static const uint8_t SWM_SPI0_SSEL0 = 18u;
 
+static uint8_t divider_from_clock(uint32_t clock) {
+    if (clock == 0u) {
+        return SPI_CLOCK_DIV4;
+    }
+    uint32_t divider = F_CPU / clock;
+    if (divider < 2u) {
+        divider = 2u;
+    }
+    if (divider > 255u) {
+        divider = 255u;
+    }
+    return (uint8_t)divider;
+}
+
 void SPIClass::applyConfig(void) {
     uint32_t cfg = LPC8XX_SPI_CFG_MASTER;
     if (_bitOrder == LSBFIRST) {
@@ -54,6 +68,23 @@ void SPIClass::end(void) {
     _begun = false;
 }
 
+void SPIClass::beginTransaction(SPISettings settings) {
+    if (!_begun) {
+        begin();
+    }
+    applySettings(settings);
+}
+
+void SPIClass::endTransaction(void) {}
+
+void SPIClass::usingInterrupt(uint8_t interruptNumber) {
+    (void)interruptNumber;
+}
+
+void SPIClass::notUsingInterrupt(uint8_t interruptNumber) {
+    (void)interruptNumber;
+}
+
 uint8_t SPIClass::transfer(uint8_t b) {
     while ((LPC8XX_SPI0->STAT & LPC8XX_SPI_STAT_TXRDY) == 0u) {
     }
@@ -61,6 +92,18 @@ uint8_t SPIClass::transfer(uint8_t b) {
     while ((LPC8XX_SPI0->STAT & LPC8XX_SPI_STAT_RXRDY) == 0u) {
     }
     return (uint8_t)(LPC8XX_SPI0->RXDAT & 0xFFu);
+}
+
+uint16_t SPIClass::transfer16(uint16_t data) {
+    uint16_t result;
+    if (_bitOrder == LSBFIRST) {
+        result = transfer((uint8_t)(data & 0xFFu));
+        result |= (uint16_t)transfer((uint8_t)(data >> 8)) << 8;
+    } else {
+        result = (uint16_t)transfer((uint8_t)(data >> 8)) << 8;
+        result |= transfer((uint8_t)(data & 0xFFu));
+    }
+    return result;
 }
 
 void SPIClass::transfer(void *buf, size_t len) {
@@ -89,4 +132,11 @@ void SPIClass::setDataMode(uint8_t mode) {
     if (_begun) {
         applyConfig();
     }
+}
+
+void SPIClass::applySettings(SPISettings settings) {
+    _divider = divider_from_clock(settings.clock());
+    _bitOrder = settings.bitOrder();
+    _dataMode = settings.dataMode() & 0x3u;
+    applyConfig();
 }
