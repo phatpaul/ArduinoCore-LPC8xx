@@ -1,0 +1,9 @@
+cmsis-dap.name=CMSIS-DAP / OpenOCD
+cmsis-dap.communication=usb
+cmsis-dap.protocol=cmsis-dap
+cmsis-dap.program.tool=openocd
+
+manual_isp.name=Manual LPC ISP fallback
+manual_isp.communication=serial
+manual_isp.protocol=isp
+manual_isp.program.tool=manual_isp

@@ -4,12 +4,16 @@
 
 extern "C" {
 
+#define PIN_GPIO(bit) {0u, bit, LPC8XX_PIN_CAP_GPIO | LPC8XX_PIN_CAP_INTERRUPT | LPC8XX_PIN_CAP_3V3_ONLY, LPC8XX_PIN_NO_ADC, LPC8XX_PIN_NO_DAC, LPC8XX_PIN_NO_PWM, bit}
+#define PIN_ANALOG(bit, adc) {0u, bit, LPC8XX_PIN_CAP_GPIO | LPC8XX_PIN_CAP_ADC | LPC8XX_PIN_CAP_INTERRUPT | LPC8XX_PIN_CAP_3V3_ONLY, adc, LPC8XX_PIN_NO_DAC, LPC8XX_PIN_NO_PWM, bit}
+#define PIN_PWM(bit, pwm) {0u, bit, LPC8XX_PIN_CAP_GPIO | LPC8XX_PIN_CAP_PWM | LPC8XX_PIN_CAP_INTERRUPT | LPC8XX_PIN_CAP_3V3_ONLY, LPC8XX_PIN_NO_ADC, LPC8XX_PIN_NO_DAC, pwm, bit}
+
 const lpc8xx_pin_info_t g_APinDescription[VARIANT_NUM_DIGITAL_PINS] = {
-    {0, 0},  {0, 1},  {0, 2},  {0, 3},  {0, 4},  {0, 5},
-    {0, 6},  {0, 7},  {0, 8},  {0, 9},  {0, 10}, {0, 11},
-    {0, 12}, {0, 13}, {0, 14}, {0, 15}, {0, 16}, {0, 17},
-    {0, 18}, {0, 19}, {0, 20}, {0, 21}, {0, 22}, {0, 23},
-    {0, 24}, {0, 25}, {0, 26}, {0, 27}, {0, 28}, {0, 29},
+    PIN_GPIO(0),  PIN_GPIO(1),  PIN_GPIO(2),  PIN_GPIO(3),  PIN_GPIO(4),  PIN_GPIO(5),
+    PIN_GPIO(6),  PIN_GPIO(7),  PIN_GPIO(8),  PIN_GPIO(9),  PIN_GPIO(10), PIN_GPIO(11),
+    PIN_GPIO(12), PIN_PWM(13, 0), PIN_ANALOG(14, 0), PIN_ANALOG(15, 1), PIN_ANALOG(16, 2), PIN_ANALOG(17, 3),
+    PIN_ANALOG(18, 4), PIN_ANALOG(19, 5), PIN_GPIO(20), PIN_GPIO(21), PIN_GPIO(22), PIN_GPIO(23),
+    PIN_GPIO(24), PIN_GPIO(25), PIN_GPIO(26), PIN_GPIO(27), PIN_GPIO(28), PIN_GPIO(29),
 };
 
 const uint8_t variant_pin_count = VARIANT_NUM_DIGITAL_PINS;

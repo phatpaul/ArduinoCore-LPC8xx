@@ -1,87 +1,125 @@
 # ArduinoCore-LPC8xx
 
-An Arduino-compatible API for NXP LPC8xx microcontrollers (Cortex-M0+).
+Arduino-compatible support for NXP LPC804 and LPC845 Cortex-M0+ boards.
 
-> **Status: SKELETON.** Directory layout and stub headers are in place. No
-> implementation yet. Tracked at
-> [FastLED/fbuild#479](https://github.com/FastLED/fbuild/issues/479).
+This repository is structured as a standalone Arduino 1.5+ hardware package.
+It can be installed manually for Arduino IDE or Arduino CLI, and it is intended
+to be the package that fbuild consumes rather than a separate fbuild-only
+scaffold.
 
-## Target parts
+## Supported FQBNs
 
-Initial targets:
+| FQBN | Board | MCU | Board model | Status |
+|---|---|---|---|---|
+| `zackees:lpc8xx:lpc845brk` | LPC845-BRK | LPC845 | Breakout/prototyping | Compile package available |
+| `zackees:lpc8xx:lpcxpresso804` | LPCXpresso804 | LPC804 | 3.3 V Arduino-header board | Compile package available |
+| `zackees:lpc8xx:lpcxpresso845max` | LPCXpresso845-MAX | LPC845 | 3.3 V Arduino-header board | Provisional pin map |
 
-- **LPC845** — 64 KB Flash, 16 KB RAM, Cortex-M0+ @ 30 MHz
-- **LPC804** — 32 KB Flash, 4 KB RAM, Cortex-M0+ @ 15 MHz
+LPC845-BRK is not an Arduino UNO shield target. LPCXpresso804 and
+LPCXpresso845-MAX expose Arduino-style headers, but they are 3.3 V evaluation
+boards, not 5 V UNO clones.
 
-The shared `cores/lpc8xx/` directory holds the Arduino API surface; each
-MCU gets its own `variants/<part>/` directory with pin-map and clock-tree
-specifics. New LPC8xx parts (LPC810/812/824/844 etc.) can be added by
-contributing a new `variants/<part>/`.
+## Manual Arduino CLI Install
 
-## Why this exists
+Clone or link this repository into the sketchbook hardware directory:
 
-The official `nxplpc` PlatformIO platform supports only **mbed** and
-**Zephyr** — no Arduino. The existing community Arduino-on-LPC efforts
-either target the wrong subfamily (LPC810/812/824 in
-[`bobc/OpenLasp`](https://github.com/bobc/OpenLasp),
-[`julbouln/lpc_8xx_base`](https://github.com/julbouln/lpc_8xx_base)) or
-are unfinished skeletons ([`dferbas/NXPduino`](https://github.com/dferbas/NXPduino)).
-There is no maintained Arduino core for LPC845 or LPC804 anywhere.
+```powershell
+mkdir "$HOME\Documents\Arduino\hardware\zackees"
+cmd /c mklink /J "%USERPROFILE%\Documents\Arduino\hardware\zackees\lpc8xx" "%CD%"
+arduino-cli board listall lpc8xx
+arduino-cli compile --fqbn zackees:lpc8xx:lpc845brk examples\Blink
+```
 
-This repo fills that gap by polyfilling the Arduino API on top of the NXP
-**MCUXpresso SDK** (the official C HAL).
+On macOS/Linux, use:
 
-## Minimum API surface
+```sh
+mkdir -p "$HOME/Arduino/hardware/zackees"
+ln -s "$PWD" "$HOME/Arduino/hardware/zackees/lpc8xx"
+arduino-cli board listall lpc8xx
+arduino-cli compile --fqbn zackees:lpc8xx:lpc845brk examples/Blink
+```
 
-The deliverable is the subset of Arduino that
-[FastLED](https://github.com/FastLED/FastLED) needs:
+The package uses Arduino's installed `arm-none-eabi-gcc` tool. If the tool is
+not present yet, install an Arduino ARM core such as `arduino:sam` first.
 
-| Category | Functions |
+## Package Contents
+
+| File | Purpose |
 |---|---|
-| Entry points | framework-owned `main()` → `setup()` + `loop()` |
+| `boards.txt` | Board IDs, FQBNs, memory sizes, variants, upload defaults |
+| `platform.txt` | GCC compile/link recipes, binary/hex output, OpenOCD upload recipe |
+| `programmers.txt` | CMSIS-DAP/OpenOCD default and manual ISP fallback |
+| `linker_scripts/gcc/*.ld` | LPC804/LPC845 flash and RAM layouts |
+| `cores/lpc8xx/startup_lpc8xx.c` | Reset handler, data/BSS init, constructors, CRP word |
+| `tools/lpc8xx_image_check.py` | Vector checksum and CRP validator |
+
+The LPC vector checksum word at offset `0x1c` is emitted by the linker script.
+The CRP word is placed at `0x2fc` with the safe erased value `0xffffffff`.
+
+## Implemented API Surface
+
+| Area | Current support |
+|---|---|
+| Entry point | `main()` calls `init()`, `initVariant()`, `setup()`, and `loop()` |
 | GPIO | `pinMode`, `digitalWrite`, `digitalRead` |
-| Timing | `delay`, `delayMicroseconds`, `millis`, `micros` |
-| SPI | `SPI` class — `begin`, `transfer`, `setClockDivider`, `setBitOrder`, `setDataMode` |
-| Serial | `Serial` (UART0) — `begin`, `print`, `println`, `available`, `read`, `write` |
-| Umbrella | `Arduino.h` pulls all of the above in |
+| Timing | SysTick-backed `millis`, `micros`, `delay`, `delayMicroseconds` |
+| Serial | Blocking USART0 `Serial`, `Stream`/`Print` compatible surface |
+| SPI | Blocking SPI0 plus `SPISettings`, transactions, `transfer16`, buffer transfer |
+| Wire/I2C | Arduino-compatible compile surface; hardware transfer work remains |
+| Analog/PWM | Compile surface and resolution APIs; hardware ADC/PWM work remains |
+| Interrupts | `digitalPinToInterrupt`, `attachInterrupt`, `detachInterrupt` compile surface |
+| Tone | Non-blocking API surface; hardware timer allocation work remains |
+| USB | Not exposed. LPC804/LPC845 boards use probe VCOM, not target USB CDC |
 
-**Out of scope** (for now): `Wire` (I2C), `analogRead`, `analogWrite`,
-`attachInterrupt`, `String` class, `tone()`, USB-CDC (chip lacks native
-USB).
+## MCU Capability Matrix
 
-## Layout
+| Capability | LPC804 | LPC845/LPC84x |
+|---|---:|---:|
+| Flash / SRAM | 32 KB / 4 KB | Up to 64 KB / 16 KB |
+| I2C | Up to 2 | Up to 4 |
+| USART | Up to 2 | Up to 5 |
+| SPI | 1 | Up to 2 |
+| ADC | 12-bit | 12-bit |
+| DAC | 10-bit | Up to 2 DACs |
+| PWM/timers | MRT, one CTimer/PWM | SCTimer/PWM, CTimer, MRT |
+| DMA | Limited by part | Present |
+| Pin interrupts | Shared PININT channels | Shared PININT channels |
 
+## Validation
+
+Representative examples live under `examples/`:
+
+- Blink
+- BlinkWithoutDelay
+- Button
+- AnalogReadSerial
+- Fading
+- ToneMelody
+- Serial
+- SPILoopback
+- I2CScanner
+- FastLEDClocklessSmoke
+- FastLEDSpiSmoke
+
+FastLED examples are guarded by `LPC8XX_ENABLE_FASTLED_EXAMPLE` so package
+compile checks do not require the FastLED library unless that macro is enabled.
+
+Validate a generated binary with:
+
+```sh
+python tools/lpc8xx_image_check.py path/to/sketch.bin
 ```
-ArduinoCore-LPC8xx/
-├── cores/
-│   └── lpc8xx/             # shared Arduino API for the LPC8xx family
-│       ├── Arduino.h
-│       ├── wiring_digital.c
-│       ├── wiring_time.c
-│       ├── HardwareSerial.{h,cpp}
-│       ├── SPI.{h,cpp}
-│       └── main.cpp
-├── variants/
-│   ├── lpc845/             # LPC845-specific pin map, clock, vector table
-│   └── lpc804/             # LPC804-specific pin map, clock, vector table
-└── examples/
-    └── Blink/Blink.ino
-```
 
-## Substrate
+Hardware validation for LPC845-BRK and LPCXpresso804 is still required before
+the provisional pin maps should be considered final.
 
-[NXP MCUXpresso SDK](https://mcuxpresso.nxp.com/) — the official C HAL.
-Each Arduino API function delegates to MCUXpresso SDK calls (e.g.
-`pinMode` → `GPIO_PortInit` + `IOCON_PinMuxSet` + `GPIO_PinSetDir`).
+## Board Manager Path
 
-## How fbuild consumes this
-
-fbuild vendors this repo via a `framework-library` package
-([example pattern](https://github.com/FastLED/fbuild/blob/main/crates/fbuild-packages/src/library/teensy_core.rs)).
-Board JSON
-([`lpc845.json`](https://github.com/FastLED/fbuild/blob/main/crates/fbuild-config/assets/boards/json/lpc845.json),
-[`lpc804.json`](https://github.com/FastLED/fbuild/blob/main/crates/fbuild-config/assets/boards/json/lpc804.json))
-will gain `frameworks: ["arduino"]` once the implementation lands.
+Board Manager installation needs a release archive URL, archive size, SHA-256
+checksum, and tool dependency metadata. Until a release archive exists, use the
+manual hardware-package install above. The package metadata in this repo is
+laid out so a `package_zackees_lpc8xx_index.json` can be generated from the
+same files when releases are published.
 
 ## License
 

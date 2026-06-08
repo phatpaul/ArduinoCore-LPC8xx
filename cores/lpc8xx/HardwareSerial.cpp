@@ -15,22 +15,12 @@ static uint32_t serial_brg(uint32_t baud) {
     return div > 0u ? div - 1u : 0u;
 }
 
-static size_t print_unsigned(HardwareSerial *serial, unsigned long value) {
-    char buf[10];
-    size_t len = 0;
-    do {
-        buf[len++] = (char)('0' + (value % 10u));
-        value /= 10u;
-    } while (value != 0u && len < sizeof(buf));
-
-    size_t written = 0;
-    while (len > 0u) {
-        written += serial->write((uint8_t)buf[--len]);
-    }
-    return written;
+void HardwareSerial::begin(uint32_t baud) {
+    begin(baud, SERIAL_8N1);
 }
 
-void HardwareSerial::begin(uint32_t baud) {
+void HardwareSerial::begin(uint32_t baud, uint16_t config) {
+    (void)config;
     lpc8xx_basic_peripheral_init();
     lpc8xx_enable_clock(LPC8XX_AHBCLK_USART0);
     lpc8xx_reset_peripheral(LPC8XX_PRESET_USART0);
@@ -54,6 +44,10 @@ void HardwareSerial::end(void) {
 
 int HardwareSerial::available(void) {
     return (LPC8XX_USART0->STAT & LPC8XX_USART_STAT_RXRDY) ? 1 : 0;
+}
+
+int HardwareSerial::availableForWrite(void) {
+    return (LPC8XX_USART0->STAT & LPC8XX_USART_STAT_TXRDY) ? 1 : 0;
 }
 
 int HardwareSerial::read(void) {
@@ -87,57 +81,6 @@ size_t HardwareSerial::write(const uint8_t *buf, size_t len) {
     return written;
 }
 
-size_t HardwareSerial::print(const char *s) {
-    size_t n = 0;
-    while (s && s[n] != '\0') {
-        ++n;
-    }
-    return write((const uint8_t *)s, n);
-}
-
-size_t HardwareSerial::print(int n) {
-    if (n < 0) {
-        return write((uint8_t)'-') + print_unsigned(this, (unsigned long)(-n));
-    }
-    return print_unsigned(this, (unsigned long)n);
-}
-
-size_t HardwareSerial::print(unsigned int n) {
-    return print_unsigned(this, (unsigned long)n);
-}
-
-size_t HardwareSerial::print(long n) {
-    if (n < 0) {
-        return write((uint8_t)'-') + print_unsigned(this, (unsigned long)(-n));
-    }
-    return print_unsigned(this, (unsigned long)n);
-}
-
-size_t HardwareSerial::print(unsigned long n) {
-    return print_unsigned(this, n);
-}
-
-size_t HardwareSerial::println(const char *s) {
-    return print(s) + println();
-}
-
-size_t HardwareSerial::println(int n) {
-    return print(n) + println();
-}
-
-size_t HardwareSerial::println(unsigned int n) {
-    return print(n) + println();
-}
-
-size_t HardwareSerial::println(long n) {
-    return print(n) + println();
-}
-
-size_t HardwareSerial::println(unsigned long n) {
-    return print(n) + println();
-}
-
-size_t HardwareSerial::println(void) {
-    static const uint8_t newline[] = {'\r', '\n'};
-    return write(newline, sizeof(newline));
+HardwareSerial::operator bool(void) const {
+    return true;
 }
