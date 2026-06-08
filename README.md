@@ -8,6 +8,12 @@
 
 Arduino-compatible support for NXP LPC804 and LPC845 Cortex-M0+ boards.
 
+> **PlatformIO platform:** [zackees/platform-nxplpc-arduino](https://github.com/zackees/platform-nxplpc-arduino)
+> — the Arduino-framework-enabled PlatformIO platform that consumes this
+> core. Set `platform = https://github.com/zackees/platform-nxplpc-arduino.git`
+> in your `platformio.ini` (see the [PlatformIO / fbuild](#platformio--fbuild)
+> section below for the full example).
+
 > **Build status legend.** The `arduino-cli` column reflects the supported
 > compile path. The `platformio` column now drives the build through
 > [zackees/platform-nxplpc-arduino](https://github.com/zackees/platform-nxplpc-arduino),
