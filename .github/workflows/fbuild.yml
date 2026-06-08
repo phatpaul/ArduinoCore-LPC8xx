@@ -21,22 +21,11 @@ jobs:
         env: [lpc845brk, lpcxpresso804, lpcxpresso845max]
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux build deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libudev-dev pkg-config
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo registry / git / target
-        uses: actions/cache@v4
+      - uses: actions/setup-python@v5
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin/fbuild
-          key: fbuild-cli-${{ runner.os }}-stable
-      - name: Install fbuild from source
-        run: cargo install --git https://github.com/FastLED/fbuild --bin fbuild fbuild-cli || cargo install --git https://github.com/FastLED/fbuild fbuild-cli
+          python-version: '3.12'
+      - name: Install fbuild
+        run: pip install --upgrade fbuild
       - name: fbuild --version
         run: fbuild --version
       - name: Build ${{ matrix.env }}
