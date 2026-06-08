@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// ArduinoCore-LPC8xx — SPI class declaration
-//
-// SKELETON: API shape only. Implementation TODO. See fbuild#479.
-//
-// Backed by SPI0 on the LPC8xx switch matrix. FastLED uses this for
-// APA102 / SK9822 / LPD8806 strips even on chips that have to bit-bang.
+// ArduinoCore-LPC8xx - SPI class declaration.
 #ifndef ARDUINO_CORE_LPC8XX_SPI_H
 #define ARDUINO_CORE_LPC8XX_SPI_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define SPI_CLOCK_DIV2   2
 #define SPI_CLOCK_DIV4   4
@@ -32,8 +28,15 @@ public:
     void setClockDivider(uint8_t divider);
     void setBitOrder(uint8_t order);
     void setDataMode(uint8_t mode);
+
+private:
+    uint8_t _divider = SPI_CLOCK_DIV4;
+    uint8_t _bitOrder = MSBFIRST;
+    uint8_t _dataMode = SPI_MODE0;
+    bool _begun = false;
+    void applyConfig(void);
 };
 
 extern SPIClass SPI;
 
-#endif // ARDUINO_CORE_LPC8XX_SPI_H
+#endif
