@@ -44,5 +44,6 @@ typedef enum IRQn {
     PIN_INT7_IRQn = 31
 } IRQn_Type;
 
+#include "../../CMSIS/core_cm0plus.h"
 #include "system_LPC804.h"
 #include "lpc8xx_registers.h"

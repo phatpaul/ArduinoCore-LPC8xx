@@ -36,7 +36,7 @@ extern "C" {
 
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
-#define abs(x) ((x)>0?(x):-(x))
+// #define abs(x) ((x)>0?(x):-(x))  // Commented out to avoid conflict with C++ stdlib
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 #define radians(deg) ((deg)*DEG_TO_RAD)
 #define degrees(rad) ((rad)*RAD_TO_DEG)
@@ -79,6 +79,7 @@ void noTone(pin_size_t pin);
 
 void init(void);
 void initVariant(void);
+void init_systick(void);
 
 void setup(void);
 void loop(void);
