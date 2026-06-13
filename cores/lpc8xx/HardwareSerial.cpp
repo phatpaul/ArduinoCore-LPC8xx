@@ -23,6 +23,9 @@ void HardwareSerial::begin(uint32_t baud, uint16_t config) {
     (void)config;
     lpc8xx_basic_peripheral_init();
     lpc8xx_enable_clock(LPC8XX_AHBCLK_USART0);
+#if defined(__LPC845__)
+    lpc845_select_usart0_main_clock();
+#endif
     lpc8xx_reset_peripheral(LPC8XX_PRESET_USART0);
 
     const uint8_t tx = lpc8xx_swm_pin(g_APinDescription[PIN_SERIAL_TX].port,

@@ -8,14 +8,19 @@
 #define VARIANT_MCU_LPC845      1
 #define VARIANT_FLASH_SIZE      (64u * 1024u)
 #define VARIANT_SRAM_SIZE       (16u * 1024u)
-#define VARIANT_FRO_HZ          30000000u
+// LPC845 boots the FRO at 24MHz divided by 2 = 12MHz. SystemInit enables
+// FRO_DIRECT to run the core at the full, undivided 24MHz, which divides to an
+// accurate 115200 baud (12MHz cannot). Keep this in sync with board f_cpu.
+#define VARIANT_FRO_HZ          24000000u
 
 #define VARIANT_NUM_DIGITAL_PINS 30u
 
 #define LED_BUILTIN 13u
 
-#define PIN_SERIAL_TX 4u
-#define PIN_SERIAL_RX 0u
+// LPC845-BRK onboard LPC11U35 VCOM bridge is wired to P0_25 (U0_TXD) and
+// P0_24 (U0_RXD). The digital-pin map is identity (pin N -> P0_N).
+#define PIN_SERIAL_TX 25u
+#define PIN_SERIAL_RX 24u
 
 #define PIN_SPI_SS   10u
 #define PIN_SPI_MOSI 11u
