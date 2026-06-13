@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "Arduino.h"
+#include "lpc8xx_registers.h"
 
 extern uint32_t _sidata;
 extern uint32_t _sdata;
@@ -97,6 +98,9 @@ void (* const g_pfnVectors[])(void) = {
 };
 
 void SystemInit(void) {
+#if defined(__LPC845__)
+    lpc845_fro_direct_enable();
+#endif
     SystemCoreClock = F_CPU;
 }
 

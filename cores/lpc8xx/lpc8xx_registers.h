@@ -137,6 +137,40 @@ static inline uint8_t lpc8xx_swm_pin(uint8_t port, uint8_t bit) {
     return (uint8_t)((port * 32u) + bit);
 }
 
+#if defined(__LPC845__)
+/* The LPC8XX_SYSCON_Type struct above describes the LPC82x register layout.
+   The LPC84x (LPC845) SYSCON map differs, so the struct's computed offsets
+   (PRESETCTRL0@0x04, FROOSCCTRL@0x48, SYSAHBCLKCTRL0@0x88) are wrong here.
+   Use the documented LPC845 absolute offsets instead (UM11029). */
+#define LPC845_SYSAHBCLKCTRL0  (*(volatile uint32_t *)(LPC8XX_SYSCON_BASE + 0x80u))
+#define LPC845_PRESETCTRL0     (*(volatile uint32_t *)(LPC8XX_SYSCON_BASE + 0x88u))
+#define LPC845_FCLKSEL0        (*(volatile uint32_t *)(LPC8XX_SYSCON_BASE + 0x90u))
+#define LPC845_FROOSCCTRL      (*(volatile uint32_t *)(LPC8XX_SYSCON_BASE + 0x28u))
+#define LPC845_FRODIRECTCLKUEN (*(volatile uint32_t *)(LPC8XX_SYSCON_BASE + 0x30u))
+
+static inline void lpc8xx_enable_clock(uint32_t bit) {
+    LPC845_SYSAHBCLKCTRL0 |= (1u << bit);
+}
+
+static inline void lpc8xx_reset_peripheral(uint32_t bit) {
+    LPC845_PRESETCTRL0 &= ~(1u << bit);
+    LPC845_PRESETCTRL0 |= (1u << bit);
+}
+
+/* USART0 needs a function clock selected (FCLKSEL[0] = 1 -> main clock);
+   without it the peripheral has no clock and transmits nothing. */
+static inline void lpc845_select_usart0_main_clock(void) {
+    LPC845_FCLKSEL0 = 1u;
+}
+
+/* Bypass the FRO /2 divider so the core runs the undivided 24MHz FRO output.
+   12MHz cannot divide to an accurate 115200; 24MHz divides at 0.16% error. */
+static inline void lpc845_fro_direct_enable(void) {
+    LPC845_FROOSCCTRL |= (1u << 17);
+    LPC845_FRODIRECTCLKUEN = 0u;
+    LPC845_FRODIRECTCLKUEN = 1u;
+}
+#else
 static inline void lpc8xx_enable_clock(uint32_t bit) {
     LPC8XX_SYSCON->SYSAHBCLKCTRL0 |= (1u << bit);
 }
@@ -145,6 +179,7 @@ static inline void lpc8xx_reset_peripheral(uint32_t bit) {
     LPC8XX_SYSCON->PRESETCTRL0 &= ~(1u << bit);
     LPC8XX_SYSCON->PRESETCTRL0 |= (1u << bit);
 }
+#endif
 
 static inline void lpc8xx_swm_assign(uint8_t function_index, uint8_t pin) {
     const uint8_t reg = (uint8_t)(function_index / 4u);
