@@ -81,11 +81,11 @@ void init(void);
 void initVariant(void);
 void init_systick(void);
 
-void setup(void);
-void loop(void);
-
 #ifdef __cplusplus
 }
+
+void setup(void);
+void loop(void);
 
 #define F(str) (str)
 
